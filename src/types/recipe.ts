@@ -7,3 +7,8 @@ export interface Recipe {
   ingredients: string[];
   steps: string[];
 }
+
+export interface SavedRecipe extends Recipe {
+  id: string;
+  sourceUrl: string;
+}
