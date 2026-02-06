@@ -3,19 +3,19 @@
 import { useState } from "react";
 import { UrlInput } from "@/components/url-input";
 import { RecipeCard } from "@/components/recipe-card";
-import { Recipe } from "@/types/recipe";
-
-type State =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "success"; recipe: Recipe }
-  | { status: "error"; message: string };
+import { RecipeDetail } from "@/components/recipe-detail";
+import { SavedRecipe } from "@/types/recipe";
 
 export default function Home() {
-  const [state, setState] = useState<State>({ status: "idle" });
+  const [recipes, setRecipes] = useState<SavedRecipe[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(url: string) {
-    setState({ status: "loading" });
+    setLoading(true);
+    setError(null);
+    setSelectedId(null);
 
     try {
       const res = await fetch("/api/extract", {
@@ -27,44 +27,79 @@ export default function Home() {
       const data = await res.json();
 
       if (!res.ok) {
-        setState({ status: "error", message: data.error || "Request failed" });
+        setError(data.error || "Request failed");
         return;
       }
 
-      setState({ status: "success", recipe: data });
+      const saved: SavedRecipe = {
+        ...data,
+        id: crypto.randomUUID(),
+        sourceUrl: url,
+      };
+      setRecipes((prev) => [saved, ...prev]);
     } catch {
-      setState({ status: "error", message: "Failed to connect to server" });
+      setError("Failed to connect to server");
+    } finally {
+      setLoading(false);
     }
   }
 
+  const selected = recipes.find((r) => r.id === selectedId) ?? null;
+
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 py-16">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold">Recipe</h1>
-        <p className="mt-2 text-zinc-500 dark:text-zinc-400">
-          Paste an Instagram cooking video link to get a written recipe
+    <div className="mx-auto min-h-screen max-w-4xl px-4 py-12">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-stone-900">Recipe</h1>
+        <p className="mt-1 text-sm text-stone-500">
+          Paste an Instagram cooking video to extract a written recipe
         </p>
       </div>
 
-      <UrlInput onSubmit={handleSubmit} loading={state.status === "loading"} />
+      <UrlInput onSubmit={handleSubmit} loading={loading} />
 
-      <div className="mt-8 w-full max-w-xl">
-        {state.status === "loading" && (
-          <div className="flex flex-col items-center gap-3 py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-700 dark:border-t-zinc-100" />
-            <p className="text-sm text-zinc-500">
-              Downloading video and extracting recipe...
+      {loading && (
+        <div className="mt-8 flex items-center gap-3">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-stone-200 border-t-amber-600" />
+          <p className="text-sm text-stone-500">
+            Downloading video and extracting recipe...
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-8">
+        {selected ? (
+          <RecipeDetail
+            recipe={selected}
+            onBack={() => setSelectedId(null)}
+          />
+        ) : recipes.length > 0 ? (
+          <>
+            <h2 className="mb-4 text-sm font-medium text-stone-400 uppercase tracking-wide">
+              Saved Recipes ({recipes.length})
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {recipes.map((r) => (
+                <RecipeCard
+                  key={r.id}
+                  recipe={r}
+                  onClick={() => setSelectedId(r.id)}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          !loading && (
+            <p className="text-sm text-stone-400">
+              No recipes yet. Paste a link above to get started.
             </p>
-          </div>
+          )
         )}
-
-        {state.status === "error" && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
-            {state.message}
-          </div>
-        )}
-
-        {state.status === "success" && <RecipeCard recipe={state.recipe} />}
       </div>
     </div>
   );
