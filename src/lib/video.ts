@@ -24,7 +24,13 @@ export function downloadVideo(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       "yt-dlp",
-      ["-f", "mp4", "--merge-output-format", "mp4", "-o", output, "--no-playlist", url],
+      [
+        "-f", "worst[ext=mp4]/worst",
+        "--merge-output-format", "mp4",
+        "-o", output,
+        "--no-playlist",
+        url,
+      ],
       { timeout: 60_000 },
       (error) => {
         if (error) {
@@ -48,7 +54,8 @@ export function extractFrames(videoPath: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
     execFile(
       "ffmpeg",
-      ["-i", videoPath, "-vf", "fps=1", "-q:v", "2", pattern],
+      // ["-i", videoPath, "-vf", "fps=1,scale=512:-2", "-q:v", "5", pattern],
+      ["-i", videoPath, "-vf", "fps=0.5,scale=512:-2", "-q:v", "5",pattern,],
       { timeout: 30_000 },
       (error) => {
         if (error) {
@@ -77,7 +84,15 @@ export function extractAudio(videoPath: string): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       "ffmpeg",
-      ["-i", videoPath, "-vn", "-acodec", "libmp3lame", "-q:a", "4", output],
+      [
+        "-i", videoPath,
+        "-vn",
+        "-ac", "1",
+        "-ar", "16000",
+        "-acodec", "libmp3lame",
+        "-q:a", "7",
+        output,
+      ],
       { timeout: 30_000 },
       (error) => {
         if (error) {
@@ -102,7 +117,7 @@ export function cleanup(...paths: string[]): void {
   for (const p of paths) {
     try {
       if (!existsSync(p)) continue;
-      if (p.endsWith(".mp4") || p.endsWith(".jpg")) {
+      if (p.endsWith(".mp4") || p.endsWith(".jpg") || p.endsWith(".mp3")) {
         unlinkSync(p);
       } else {
         readdirSync(p).forEach((f) => unlinkSync(join(p, f)));

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { UrlInput } from "@/components/url-input";
 import { RecipeCard } from "@/components/recipe-card";
 import { RecipeDetail } from "@/components/recipe-detail";
@@ -55,10 +55,10 @@ export default function Home() {
     }
   }
 
-  const handleLinksReceived = useCallback((links: string[]) => {
+  function handleLinksReady(links: string[]) {
     setPendingLinks(links);
     setModalOpen(false);
-  }, []);
+  }
 
   async function handleConvertAll() {
     if (pendingLinks.length === 0) return;
@@ -187,7 +187,7 @@ export default function Home() {
       <CollectionModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onLinksReceived={handleLinksReceived}
+        onLinksReady={handleLinksReady}
       />
     </div>
   );
