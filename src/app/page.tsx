@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UrlInput } from "@/components/url-input";
 import { RecipeCard } from "@/components/recipe-card";
 import { RecipeDetail } from "@/components/recipe-detail";
@@ -8,12 +8,19 @@ import { CollectionModal } from "@/components/collection-modal";
 import { BatchProgress } from "@/components/batch-progress";
 import { SavedRecipe } from "@/types/recipe";
 
+async function persistRecipe(recipe: SavedRecipe) {
+  await fetch("/api/recipes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(recipe),
+  });
+}
+
 export default function Home() {
   const [recipes, setRecipes] = useState<SavedRecipe[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingLinks, setPendingLinks] = useState<string[]>([]);
   const [batch, setBatch] = useState<{
@@ -22,6 +29,13 @@ export default function Home() {
     failed: number;
     currentUrl: string | null;
   } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/recipes")
+      .then((r) => r.json())
+      .then(setRecipes)
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(url: string) {
     setLoading(true);
@@ -48,6 +62,7 @@ export default function Home() {
         sourceUrl: url,
       };
       setRecipes((prev) => [saved, ...prev]);
+      persistRecipe(saved);
     } catch {
       setError("Failed to connect to server");
     } finally {
@@ -86,6 +101,7 @@ export default function Home() {
             sourceUrl: url,
           };
           setRecipes((prev) => [saved, ...prev]);
+          persistRecipe(saved);
           setBatch((b) => b && { ...b, completed: b.completed + 1 });
         } else {
           setBatch((b) => b && { ...b, failed: b.failed + 1 });
