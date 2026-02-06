@@ -1,12 +1,27 @@
 import OpenAI from "openai";
+import fs from "fs";
 import { Recipe } from "@/types/recipe";
 
 function getClient() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 }
 
-const PROMPT = `These are frames extracted from a cooking video (1 frame per second).
-Analyze all frames carefully and extract the complete recipe.
+export async function transcribeAudio(audioPath: string): Promise<string> {
+  const transcription = await getClient().audio.transcriptions.create({
+    file: fs.createReadStream(audioPath),
+    model: "whisper-1",
+  });
+  return transcription.text;
+}
+
+function buildPrompt(transcript: string): string {
+  return `These are frames extracted from a cooking video (1 frame per second).
+The audio from the video has been transcribed below.
+
+AUDIO TRANSCRIPT:
+${transcript}
+
+Using both the visual frames and the audio transcript, extract the complete recipe.
 Return ONLY valid JSON matching this exact structure (no markdown, no code fences):
 {
   "title": "Recipe name",
@@ -20,8 +35,12 @@ Return ONLY valid JSON matching this exact structure (no markdown, no code fence
 If you cannot determine a field, use a reasonable estimate or "Not specified".
 Be thorough with ingredients — include quantities when visible or mentioned.
 Write steps as clear, concise instructions.`;
+}
 
-export async function extractRecipe(frames: string[]): Promise<Recipe> {
+export async function extractRecipe(
+  frames: string[],
+  transcript: string
+): Promise<Recipe> {
   const imageInputs = frames.map((base64) => ({
     type: "input_image" as const,
     image_url: `data:image/jpeg;base64,${base64}`,
@@ -35,7 +54,7 @@ export async function extractRecipe(frames: string[]): Promise<Recipe> {
         role: "user",
         content: [
           ...imageInputs,
-          { type: "input_text" as const, text: PROMPT },
+          { type: "input_text" as const, text: buildPrompt(transcript) },
         ],
       },
     ],

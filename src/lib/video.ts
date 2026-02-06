@@ -70,6 +70,30 @@ export function extractFrames(videoPath: string): Promise<string[]> {
   });
 }
 
+export function extractAudio(videoPath: string): Promise<string> {
+  const dir = mkdtempSync(join(tmpdir(), "recipe-audio-"));
+  const output = join(dir, "audio.mp3");
+
+  return new Promise((resolve, reject) => {
+    execFile(
+      "ffmpeg",
+      ["-i", videoPath, "-vn", "-acodec", "libmp3lame", "-q:a", "4", output],
+      { timeout: 30_000 },
+      (error) => {
+        if (error) {
+          reject(new Error(`Failed to extract audio: ${error.message}`));
+          return;
+        }
+        if (!existsSync(output)) {
+          reject(new Error("Audio extraction completed but file not found"));
+          return;
+        }
+        resolve(output);
+      }
+    );
+  });
+}
+
 export function readFramesAsBase64(framePaths: string[]): string[] {
   return framePaths.map((p) => readFileSync(p).toString("base64"));
 }

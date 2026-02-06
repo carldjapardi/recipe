@@ -3,10 +3,11 @@ import {
   isInstagramUrl,
   downloadVideo,
   extractFrames,
+  extractAudio,
   readFramesAsBase64,
   cleanup,
 } from "@/lib/video";
-import { extractRecipe } from "@/lib/openai";
+import { transcribeAudio, extractRecipe } from "@/lib/openai";
 import { dirname } from "path";
 
 export const maxDuration = 120;
@@ -14,6 +15,7 @@ export const maxDuration = 120;
 export async function POST(request: NextRequest) {
   let videoPath: string | null = null;
   let framesDir: string | null = null;
+  let audioPath: string | null = null;
 
   try {
     const { url } = await request.json();
@@ -30,10 +32,21 @@ export async function POST(request: NextRequest) {
     }
 
     videoPath = await downloadVideo(url);
-    const framePaths = await extractFrames(videoPath);
+
+    const [framePaths, audioFile] = await Promise.all([
+      extractFrames(videoPath),
+      extractAudio(videoPath),
+    ]);
+
     framesDir = dirname(framePaths[0]);
-    const base64Frames = readFramesAsBase64(framePaths);
-    const recipe = await extractRecipe(base64Frames);
+    audioPath = audioFile;
+
+    const [base64Frames, transcript] = await Promise.all([
+      Promise.resolve(readFramesAsBase64(framePaths)),
+      transcribeAudio(audioFile),
+    ]);
+
+    const recipe = await extractRecipe(base64Frames, transcript);
 
     return NextResponse.json(recipe);
   } catch (e) {
@@ -42,5 +55,6 @@ export async function POST(request: NextRequest) {
   } finally {
     if (videoPath) cleanup(videoPath, dirname(videoPath));
     if (framesDir) cleanup(framesDir);
+    if (audioPath) cleanup(audioPath, dirname(audioPath));
   }
 }
