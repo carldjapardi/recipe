@@ -11,4 +11,5 @@ export interface Recipe {
 export interface SavedRecipe extends Recipe {
   id: string;
   sourceUrl: string;
+  userId?: string;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UrlInput } from "@/components/url-input";
 import { RecipeCard } from "@/components/recipe-card";
 import { RecipeDetail } from "@/components/recipe-detail";
@@ -17,6 +18,8 @@ async function persistRecipe(recipe: SavedRecipe) {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const [username, setUsername] = useState<string | null>(null);
   const [recipes, setRecipes] = useState<SavedRecipe[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,11 +34,20 @@ export default function Home() {
   } | null>(null);
 
   useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setUsername(d.username))
+      .catch(() => {});
     fetch("/api/recipes")
       .then((r) => r.json())
       .then(setRecipes)
       .catch(() => {});
   }, []);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  }
 
   async function handleSubmit(url: string) {
     setLoading(true);
@@ -119,11 +131,24 @@ export default function Home() {
 
   return (
     <div className="mx-auto min-h-screen max-w-4xl px-4 py-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-stone-900">Recipe</h1>
-        <p className="mt-1 text-sm text-stone-500">
-          Paste an Instagram cooking video to extract a written recipe
-        </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900">Recipe</h1>
+          <p className="mt-1 text-sm text-stone-500">
+            Paste an Instagram cooking video to extract a written recipe
+          </p>
+        </div>
+        {username && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-stone-500">{username}</span>
+            <button
+              onClick={handleLogout}
+              className="rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-50"
+            >
+              Log out
+            </button>
+          </div>
+        )}
       </div>
 
       <UrlInput

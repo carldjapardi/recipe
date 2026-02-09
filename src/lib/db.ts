@@ -20,6 +20,10 @@ export function getAllRecipes(): SavedRecipe[] {
   return JSON.parse(data);
 }
 
+export function getRecipesByUser(userId: string): SavedRecipe[] {
+  return getAllRecipes().filter((r) => r.userId === userId);
+}
+
 export function saveRecipe(recipe: SavedRecipe): void {
   ensureDb();
   const recipes = getAllRecipes();
