@@ -126,6 +126,16 @@ export default function Home() {
     setBatch(null);
   }
 
+  async function handleDelete(id: string) {
+    setRecipes((prev) => prev.filter((r) => r.id !== id));
+    if (selectedId === id) setSelectedId(null);
+    await fetch("/api/recipes", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+  }
+
   const selected = recipes.find((r) => r.id === selectedId) ?? null;
   const isBusy = loading || batch !== null;
 
@@ -212,6 +222,7 @@ export default function Home() {
                   key={r.id}
                   recipe={r}
                   onClick={() => setSelectedId(r.id)}
+                  onDelete={() => handleDelete(r.id)}
                 />
               ))}
             </div>
