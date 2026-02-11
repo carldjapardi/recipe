@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { findByUsername, createUser } from "@/lib/users";
-import { signToken } from "@/lib/auth";
-
-const COOKIE_OPTS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  maxAge: 60 * 60 * 24 * 7,
-  path: "/",
-};
+import { signToken, COOKIE_OPTS } from "@/lib/auth";
 
 export async function POST(request: Request) {
   const { username, password } = await request.json();

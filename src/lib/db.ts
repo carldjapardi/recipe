@@ -1,14 +1,12 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { SavedRecipe } from "@/types/recipe";
 
 const DB_PATH = join(process.cwd(), "data", "recipes.json");
 
 function ensureDb(): void {
-  if (!existsSync(join(process.cwd(), "data"))) {
-    const { mkdirSync } = require("fs");
-    mkdirSync(join(process.cwd(), "data"), { recursive: true });
-  }
+  const dir = join(process.cwd(), "data");
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   if (!existsSync(DB_PATH)) {
     writeFileSync(DB_PATH, "[]", "utf-8");
   }
@@ -36,11 +34,12 @@ export function saveRecipe(recipe: SavedRecipe): void {
   writeFileSync(DB_PATH, JSON.stringify(recipes, null, 2), "utf-8");
 }
 
-export function deleteRecipe(id: string): boolean {
+export function deleteRecipe(id: string, userId?: string): boolean {
   ensureDb();
   const recipes = getAllRecipes();
+  const match = recipes.find((r) => r.id === id);
+  if (!match || (userId && match.userId !== userId)) return false;
   const filtered = recipes.filter((r) => r.id !== id);
-  if (filtered.length === recipes.length) return false;
   writeFileSync(DB_PATH, JSON.stringify(filtered, null, 2), "utf-8");
   return true;
 }

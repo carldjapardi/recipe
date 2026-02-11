@@ -34,14 +34,10 @@ export default function Home() {
   } | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => setUsername(d.username))
-      .catch(() => {});
-    fetch("/api/recipes")
-      .then((r) => r.json())
-      .then(setRecipes)
-      .catch(() => {});
+    Promise.all([
+      fetch("/api/auth/me").then((r) => (r.ok ? r.json() : {})).then((d) => d.username && setUsername(d.username)),
+      fetch("/api/recipes").then((r) => (r.ok ? r.json() : [])).then(setRecipes).catch(() => setRecipes([])),
+    ]);
   }, []);
 
   async function handleLogout() {
@@ -49,34 +45,27 @@ export default function Home() {
     router.push("/login");
   }
 
+  async function extractOne(url: string): Promise<SavedRecipe | null> {
+    const res = await fetch("/api/extract", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    return { ...data, id: crypto.randomUUID(), sourceUrl: url };
+  }
+
   async function handleSubmit(url: string) {
     setLoading(true);
     setError(null);
     setSelectedId(null);
-
     try {
-      const res = await fetch("/api/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Request failed");
-        return;
-      }
-
-      const saved: SavedRecipe = {
-        ...data,
-        id: crypto.randomUUID(),
-        sourceUrl: url,
-      };
+      const saved = await extractOne(url);
       setRecipes((prev) => [saved, ...prev]);
       persistRecipe(saved);
-    } catch {
-      setError("Failed to connect to server");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to connect to server");
     } finally {
       setLoading(false);
     }
@@ -89,40 +78,20 @@ export default function Home() {
 
   async function handleConvertAll() {
     if (pendingLinks.length === 0) return;
-
     const links = [...pendingLinks];
     setPendingLinks([]);
     setBatch({ total: links.length, completed: 0, failed: 0, currentUrl: null });
-
     for (const url of links) {
       setBatch((b) => b && { ...b, currentUrl: url });
-
       try {
-        const res = await fetch("/api/extract", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url }),
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          const saved: SavedRecipe = {
-            ...data,
-            id: crypto.randomUUID(),
-            sourceUrl: url,
-          };
-          setRecipes((prev) => [saved, ...prev]);
-          persistRecipe(saved);
-          setBatch((b) => b && { ...b, completed: b.completed + 1 });
-        } else {
-          setBatch((b) => b && { ...b, failed: b.failed + 1 });
-        }
+        const saved = await extractOne(url);
+        setRecipes((prev) => [saved, ...prev]);
+        persistRecipe(saved);
+        setBatch((b) => b && { ...b, completed: (b?.completed ?? 0) + 1 });
       } catch {
-        setBatch((b) => b && { ...b, failed: b.failed + 1 });
+        setBatch((b) => b && { ...b, failed: (b?.failed ?? 0) + 1 });
       }
     }
-
     setBatch(null);
   }
 

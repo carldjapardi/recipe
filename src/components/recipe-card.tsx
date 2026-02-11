@@ -12,10 +12,7 @@ export function RecipeCard({
   return (
     <div className="relative rounded-xl border border-stone-200 bg-white p-5 transition hover:border-amber-300 hover:shadow-md">
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
         className="absolute top-3 right-3 rounded-md p-1 text-stone-300 hover:bg-red-50 hover:text-red-500"
         title="Delete recipe"
       >

@@ -9,13 +9,9 @@ import {
 } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
+import { isInstagramUrl } from "./instagram";
 
-const INSTAGRAM_URL_RE =
-  /^https?:\/\/(www\.)?instagram\.com\/(reel|p|reels)\/[\w-]+/;
-
-export function isInstagramUrl(url: string): boolean {
-  return INSTAGRAM_URL_RE.test(url);
-}
+export { isInstagramUrl };
 
 export function downloadVideo(url: string): Promise<string> {
   const dir = mkdtempSync(join(tmpdir(), "recipe-"));

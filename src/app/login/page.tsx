@@ -58,7 +58,7 @@ export default function LoginPage() {
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-800 outline-none placeholder:text-stone-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+            className="input-base"
             required
           />
           <input
@@ -66,7 +66,7 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-800 outline-none placeholder:text-stone-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+            className="input-base"
             required
           />
 

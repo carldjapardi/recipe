@@ -60,8 +60,9 @@ export function CollectionModal({
     window.open("https://www.instagram.com", "_blank");
   }
 
+  const links = parseLinks(pastedText);
+
   function handleConvert() {
-    const links = parseLinks(pastedText);
     if (links.length > 0) {
       onLinksReady(links);
       setPastedText("");
@@ -69,8 +70,6 @@ export function CollectionModal({
   }
 
   if (!open) return null;
-
-  const parsedCount = parseLinks(pastedText).length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -114,18 +113,18 @@ export function CollectionModal({
           className="mt-3 h-24 w-full resize-none rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 outline-none placeholder:text-stone-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
         />
 
-        {parsedCount > 0 && (
+        {links.length > 0 && (
           <p className="mt-1 text-xs text-stone-500">
-            {parsedCount} valid link{parsedCount > 1 ? "s" : ""} detected
+            {links.length} valid link{links.length > 1 ? "s" : ""} detected
           </p>
         )}
 
         <button
           onClick={handleConvert}
-          disabled={parsedCount === 0}
+          disabled={links.length === 0}
           className="mt-3 w-full rounded-lg bg-amber-600 py-2.5 text-sm font-medium text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Convert {parsedCount > 0 ? `${parsedCount} link${parsedCount > 1 ? "s" : ""}` : "All"}
+          Convert {links.length > 0 ? `${links.length} link${links.length > 1 ? "s" : ""}` : "All"}
         </button>
       </div>
     </div>

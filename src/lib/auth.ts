@@ -3,6 +3,14 @@ import { cookies } from "next/headers";
 
 const COOKIE_NAME = "token";
 
+export const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 60 * 60 * 24 * 7,
+  path: "/",
+};
+
 function getSecret() {
   return new TextEncoder().encode(process.env.AUTH_SECRET);
 }

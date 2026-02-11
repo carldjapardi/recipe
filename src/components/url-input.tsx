@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const INSTAGRAM_URL_RE =
-  /^https?:\/\/(www\.)?instagram\.com\/(reel|p|reels)\/[\w-]+/;
+import { isInstagramUrl } from "@/lib/instagram";
 
 export function UrlInput({
   onSubmit,
@@ -23,7 +21,7 @@ export function UrlInput({
     setUrl("");
   }
 
-  const valid = url.trim() === "" || INSTAGRAM_URL_RE.test(url.trim());
+  const valid = url.trim() === "" || isInstagramUrl(url.trim());
 
   return (
     <div className="w-full max-w-2xl space-y-2">

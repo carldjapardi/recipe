@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isInstagramUrl } from "@/lib/instagram";
 import {
-  isInstagramUrl,
   downloadVideo,
   extractFrames,
   extractAudio,
@@ -41,10 +41,8 @@ export async function POST(request: NextRequest) {
     framesDir = dirname(framePaths[0]);
     audioPath = audioFile;
 
-    const [base64Frames, transcript] = await Promise.all([
-      Promise.resolve(readFramesAsBase64(framePaths)),
-      transcribeAudio(audioFile),
-    ]);
+    const base64Frames = readFramesAsBase64(framePaths);
+    const transcript = await transcribeAudio(audioFile);
 
     const recipe = await extractRecipe(base64Frames, transcript);
 
