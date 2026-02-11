@@ -35,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/auth/me").then((r) => (r.ok ? r.json() : {})).then((d) => d.username && setUsername(d.username)),
+      fetch("/api/auth/me").then((r) => (r.ok ? r.json() : {})).then((d: { username?: string }) => d.username && setUsername(d.username)),
       fetch("/api/recipes").then((r) => (r.ok ? r.json() : [])).then(setRecipes).catch(() => setRecipes([])),
     ]);
   }, []);
@@ -45,7 +45,7 @@ export default function Home() {
     router.push("/login");
   }
 
-  async function extractOne(url: string): Promise<SavedRecipe | null> {
+  async function extractOne(url: string): Promise<SavedRecipe> {
     const res = await fetch("/api/extract", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
